@@ -1,6 +1,5 @@
 import {createApp} from 'vue';
 import App from "@/App.vue";
-//import './style.css';
 
 import 'primevue/resources/themes/aura-light-purple/theme.css'
 import PrimeVue from 'primevue/config';
@@ -17,6 +16,22 @@ import Toast from 'primevue/toast';
 import ToastService from 'primevue/toastservice';
 import InputNumber from "primevue/inputnumber";
 
+import {createMemoryHistory, createRouter} from 'vue-router'
+
+import ArtistComponent from '@/components/ArtistComponent.vue'
+import SongComponent from "@/components/SongComponent.vue";
+import SongView from "@/views/SongView.vue";
+import ArtistView from "@/views/ArtistView.vue";
+
+const routes = [
+    {path: '/songs', component: SongView},
+    {path: '/artists', component: ArtistView},
+]
+
+const router = createRouter({
+    history: createMemoryHistory(),
+    routes,
+})
 
 const app = createApp(App);
 app.component('IconField', IconField);
@@ -30,4 +45,5 @@ app.component('Toast', Toast);
 app.component('InputNumber', InputNumber);
 app.use(ToastService);
 app.use(PrimeVue);
+app.use(router);
 app.mount('#app');
