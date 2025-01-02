@@ -22,9 +22,9 @@
     <ArtistComponent v-for="artist in pageData.value" :key="artist.id" :artist="artist"
                      @pageUpdate="pageUpdate(currentPage.value)"/>
   </div>
-  <Dialog v-model:visible="addArtistOverlayIsVisible" modal header="Add a Artist" :style="{ width: '25rem' }">
+  <Dialog v-model:visible="addArtistOverlayIsVisible" modal header="Add an Artist" :style="{ width: '25rem' }">
     <div class="flex items-center gap-4 mb-4">
-      <label for="title" class="font-semibold w-24">Title</label>
+      <label for="title" class="font-semibold w-24">Name</label>
       <InputText id="title" class="flex-auto" autocomplete="off" v-model="newArtist.name"/>
     </div>
     <div class="flex justify-end gap-2">

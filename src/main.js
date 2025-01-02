@@ -15,11 +15,11 @@ import Dialog from 'primevue/dialog';
 import Toast from 'primevue/toast';
 import ToastService from 'primevue/toastservice';
 import InputNumber from "primevue/inputnumber";
+import Dropdown from 'primevue/dropdown';
+import AutoComplete from 'primevue/autocomplete';
 
 import {createMemoryHistory, createRouter} from 'vue-router'
 
-import ArtistComponent from '@/components/ArtistComponent.vue'
-import SongComponent from "@/components/SongComponent.vue";
 import SongView from "@/views/SongView.vue";
 import ArtistView from "@/views/ArtistView.vue";
 
@@ -43,6 +43,8 @@ app.component('Toolbar', Toolbar);
 app.component('Dialog', Dialog);
 app.component('Toast', Toast);
 app.component('InputNumber', InputNumber);
+app.component('Dropdown', Dropdown);
+app.component('AutoComplete', AutoComplete);
 app.use(ToastService);
 app.use(PrimeVue);
 app.use(router);

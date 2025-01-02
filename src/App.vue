@@ -14,9 +14,9 @@
     </template>
 
   </Toolbar>
-
   <RouterView/>
 </template>
 
 <script setup>
+import SongView from "@/views/SongView.vue";
 </script>

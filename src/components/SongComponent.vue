@@ -1,7 +1,7 @@
 <template>
   <Toast/>
   <Card style="margin: 10px; width: 20rem; overflow: hidden">
-    <template #title>{{ song.title }} - {{ song.artist }}</template>
+    <template #title>{{ song.title }} - {{ song.artist.name }}</template>
     <template #subtitle>{{ song.genre }}</template>
     <template #content>{{ formattedLength }} min</template>
     <template #footer>
@@ -18,7 +18,8 @@
     </div>
     <div class="flex items-center gap-4 mb-8">
       <label for="artist" class="font-semibold w-24">Artist</label>
-      <InputText id="artist" class="flex-auto" autocomplete="off" v-model="song.artist"/>
+      <Dropdown v-model="song.artist" editable :options="artists.value" optionLabel="name"
+                placeholder="Select an artist" class="w-full md:w-14rem"/>
     </div>
     <div class="flex items-center gap-4 mb-8">
       <label for="genre" class="font-semibold w-24">Genre</label>
@@ -36,7 +37,7 @@
 </template>
 
 <script setup>
-import {computed, ref} from 'vue';
+import {computed, onMounted, ref} from 'vue';
 import axios from 'axios';
 import {defineProps} from 'vue';
 import {useToast} from "primevue/usetoast";
@@ -48,20 +49,25 @@ const editSongOverlayIsVisible = ref(false);
 const props = defineProps({
   song: {
     _links: {
+      artist: {
+        href: String,
+      },
       self: {
         href: String,
       },
       song: {
         href: String,
-      },
+      }
     },
-    title: String,
-    artist: String,
+    artist: {},
     genre: String,
     length: Number,
+    title: String,
+  },
+  artists: {
+    type: Array,
   }
 });
-console.log("Song", props.song);
 
 const formattedLength = computed(() => {
   const minutes = Math.floor(props.song.length / 60);
@@ -86,9 +92,9 @@ function showDeletionSuccess() {
 
 async function editSong() {
   try {
-    await axios.put(`${props.song._links.self.href}`, {
+    await axios.patch(`${props.song._links.self.href}`, {
       title: props.song.title,
-      artist: props.song.artist,
+      artist: props.song.artist._links.self.href,
       genre: props.song.genre,
       length: props.song.length,
     });

@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import {computed, ref} from 'vue';
+import {ref} from 'vue';
 import axios from 'axios';
 import {defineProps} from 'vue';
 import {useToast} from "primevue/usetoast";
@@ -44,7 +44,6 @@ const props = defineProps({
     name: String,
   }
 });
-console.log("Artist", props.artist);
 
 async function deleteArtist() {
   try {

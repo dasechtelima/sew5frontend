@@ -5,13 +5,13 @@
     </template>
     <template #center>
       <Button label="First" icon="pi pi-step-backward" @click="pageUpdate('first')" style="margin-right: 10px"
-              :disabled="currentPage.value <= 0"/>
+              :disabled="currentPage <= 0"/>
       <Button label="Previous" icon="pi pi-caret-left" @click="pageUpdate('previous')" style="margin-right: 10px"
-              :disabled="currentPage.value <= 0"/>
+              :disabled="currentPage <= 0"/>
       <Button label="Next" icon="pi pi-caret-right" @click="pageUpdate('next')" style="margin-right: 10px"
-              :disabled="currentPage.value >= totalPageCount.value-1"/>
+              :disabled="currentPage >= totalPageCount.value-1"/>
       <Button label="Last" icon="pi pi-step-forward" @click="pageUpdate('last')" style="margin-right: 10px"
-              :disabled="currentPage.value >= totalPageCount.value-1"/>
+              :disabled="currentPage >= totalPageCount.value-1"/>
     </template>
     <template #end>
       <InputText v-model="searchTerm" placeholder="Search by title or artist" @input="debounceSearch"/>
@@ -19,8 +19,8 @@
   </Toolbar>
   <Toast/>
   <div style="display: flex; flex-direction:row; flex-wrap:wrap">
-    <SongComponent v-for="song in pageData.value" :key="song.id" :song="song"
-                   @pageUpdate="pageUpdate(currentPage.value)"/>
+    <SongComponent v-for="song in pageData.value" :key="song._links.self.href" :song="song" :artists="artists"
+                   @pageUpdate="pageUpdate(currentPage)"/>
   </div>
   <Dialog v-model:visible="addSongOverlayIsVisible" modal header="Add a Song" :style="{ width: '25rem' }">
     <div class="flex items-center gap-4 mb-4">
@@ -29,7 +29,9 @@
     </div>
     <div class="flex items-center gap-4 mb-8">
       <label for="artist" class="font-semibold w-24">Artist</label>
-      <InputText id="artist" class="flex-auto" autocomplete="off" v-model="newSong.artist"/>
+      <Dropdown v-model="newSong.artist" editable :options="artists.value" optionLabel="name"
+                placeholder="Select an artist" class="w-full md:w-14rem"/>
+      <!-- <InputText id="artist" class="flex-auto" autocomplete="off" v-model="newSong.artist"/> -->
     </div>
     <div class="flex items-center gap-4 mb-8">
       <label for="genre" class="font-semibold w-24">Genre</label>
@@ -54,7 +56,7 @@ import {useToast} from "primevue/usetoast";
 
 const toast = useToast();
 const pageData = reactive([]);
-const currentPage = reactive([0]);
+const currentPage = ref(0);
 const totalPageCount = reactive([""]);
 const addSongOverlayIsVisible = ref(false);
 const newSong = reactive({
@@ -65,14 +67,25 @@ const newSong = reactive({
 });
 const searchTerm = ref('');
 let debounceTimeout;
+const artists = reactive([]);
 
 async function fetchSongData(page) {
   try {
-    const response = await axios.get(`http://localhost:8080/api/songs?page=${page}`);
+    const response = await axios.get(`http://localhost:8080/api/songs?page=${page}&projection=songWithArtist`);
     pageData.value = response.data["_embedded"]["songs"];
     totalPageCount.value = response.data["page"]["totalPages"];
+    console.log("Current Page: ", currentPage.value);
   } catch (error) {
     console.error('Error fetching data:', error);
+  }
+}
+
+async function fetchArtists() {
+  try {
+    const response = await axios.get('http://localhost:8080/api/artists?page=0&size=999');
+    artists.value = response.data["_embedded"]["artists"];
+  } catch (error) {
+    console.error('Error fetching artists:', error);
   }
 }
 
@@ -95,6 +108,7 @@ async function pageUpdate(page) {
 
 async function addSong() {
   try {
+    newSong.artist = newSong.artist._links.artist.href;
     await axios.post('http://localhost:8080/api/songs', newSong);
     addSongOverlayIsVisible.value = false;
     newSong.title = '';
@@ -137,6 +151,7 @@ function debounceSearch() {
 onMounted(async () => {
   try {
     await fetchSongData(currentPage.value);
+    await fetchArtists();
   } catch (error) {
     console.error('Error fetching data:', error);
   }
