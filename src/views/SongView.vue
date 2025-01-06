@@ -17,10 +17,17 @@
       <InputText v-model="searchTerm" placeholder="Search by title or artist" @input="debounceSearch"/>
     </template>
   </Toolbar>
+  <div v-if="currentlyPlayingSong">
+    <p>Playing Song: {{ currentlyPlayingSongTitle }} by {{ currentlyPlayingSongArtist }}</p>
+    <audio ref="audioPlayer" controls autoplay>
+      <source :src="currentlyPlayingSong" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
+  </div>
   <Toast/>
   <div style="display: flex; flex-direction:row; flex-wrap:wrap">
     <SongComponent v-for="song in pageData.value" :key="song._links.self.href" :song="song" :artists="artists"
-                   @pageUpdate="pageUpdate(currentPage)"/>
+                   @pageUpdate="pageUpdate(currentPage)" @playSong="handlePlaySong"/>
   </div>
   <Dialog v-model:visible="addSongOverlayIsVisible" modal header="Add a Song" :style="{ width: '25rem' }">
     <div class="flex items-center gap-4 mb-4">
@@ -36,6 +43,10 @@
     <div class="flex items-center gap-4 mb-8">
       <label for="genre" class="font-semibold w-24">Genre</label>
       <InputText id="genre" class="flex-auto" autocomplete="off" v-model="newSong.genre"/>
+    </div>
+    <div class="flex items-center gap-4 mb-8">
+      <label for="genre" class="font-semibold w-24">File</label>
+      <FileUpload mode="basic" accept="audio/*" @select="onFileSelect"/>
     </div>
     <div class="flex items-center gap-4 mb-8">
       <label for="genre" class="font-semibold w-24">Length in s</label>
@@ -64,10 +75,16 @@ const newSong = reactive({
   artist: '',
   genre: '',
   length: 0,
+  file: ''
 });
 const searchTerm = ref('');
 let debounceTimeout;
 const artists = reactive([]);
+const uploadFile = ref(null);
+const currentlyPlayingSong = ref('');
+const currentlyPlayingSongTitle = ref('');
+const currentlyPlayingSongArtist = ref('');
+const audioPlayer = ref(null);
 
 async function fetchSongData(page) {
   try {
@@ -106,19 +123,49 @@ async function pageUpdate(page) {
   }
 }
 
+function onFileSelect(event) {
+  uploadFile.value = event.files[0];
+}
+
+function encodeAudioFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      resolve(reader.result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 async function addSong() {
   try {
+    if (uploadFile.value) {
+      newSong.file = await encodeAudioFile(uploadFile.value);
+    }
     newSong.artist = newSong.artist._links.artist.href;
+    console.log('Adding song:', newSong);
     await axios.post('http://localhost:8080/api/songs', newSong);
     addSongOverlayIsVisible.value = false;
     newSong.title = '';
     newSong.artist = '';
     newSong.genre = '';
     newSong.length = 0;
+    newSong.file = '';
     await pageUpdate(currentPage.value);
     showAddSuccess();
   } catch (error) {
     console.error('Error adding song:', error);
+  }
+}
+
+function handlePlaySong({file, title, artistName}) {
+  currentlyPlayingSong.value = file;
+  currentlyPlayingSongTitle.value = title;
+  currentlyPlayingSongArtist.value = artistName;
+  if (audioPlayer.value) {
+    audioPlayer.value.load();
+    audioPlayer.value.play();
   }
 }
 

@@ -1,5 +1,6 @@
 import {createApp} from 'vue';
 import App from "@/App.vue";
+//import "@/assets/base.css";
 
 import 'primevue/resources/themes/aura-light-purple/theme.css'
 import PrimeVue from 'primevue/config';
@@ -17,6 +18,8 @@ import ToastService from 'primevue/toastservice';
 import InputNumber from "primevue/inputnumber";
 import Dropdown from 'primevue/dropdown';
 import AutoComplete from 'primevue/autocomplete';
+import FileUpload from 'primevue/fileupload';
+
 
 import {createMemoryHistory, createRouter} from 'vue-router'
 
@@ -45,6 +48,7 @@ app.component('Toast', Toast);
 app.component('InputNumber', InputNumber);
 app.component('Dropdown', Dropdown);
 app.component('AutoComplete', AutoComplete);
+app.component('FileUpload', FileUpload);
 app.use(ToastService);
 app.use(PrimeVue);
 app.use(router);

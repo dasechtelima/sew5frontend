@@ -8,6 +8,7 @@
       <div style="display:flex; gap: 2rem; justify-content: center">
         <Button label="Edit" severity="secondary" outlined class="w-full" v-on:click="editSongOverlayIsVisible = true"/>
         <Button label="Delete" severity="danger" class="w-full" v-on:click="deleteSong()"/>
+        <Button icon="pi pi-play" class="w-full" v-on:click="playSong()"/>
       </div>
     </template>
   </Card>
@@ -44,7 +45,7 @@ import {useToast} from "primevue/usetoast";
 
 const toast = useToast();
 
-const emit = defineEmits(['pageUpdate']);
+const emit = defineEmits(['pageUpdate', 'playSong']);
 const editSongOverlayIsVisible = ref(false);
 const props = defineProps({
   song: {
@@ -104,6 +105,19 @@ async function editSong() {
     console.log('Song updated');
   } catch (error) {
     console.error('Error updating song:', error);
+  }
+}
+
+async function playSong() {
+  try {
+    const response = await axios.get(`${props.song._links.self.href}?projection=songFile`);
+    emit('playSong', {
+      file: response.data.file,
+      title: props.song.title,
+      artistName: props.song.artist.name
+    });
+  } catch (error) {
+    console.error('Error fetching data:', error);
   }
 }
 
