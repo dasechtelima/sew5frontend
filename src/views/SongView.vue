@@ -160,6 +160,10 @@ async function addSong() {
 }
 
 function handlePlaySong({file, title, artistName}) {
+  if (file === "") {
+    toast.add({severity: 'info', summary: 'No file available for this song', life: 3000});
+    return;
+  }
   currentlyPlayingSong.value = file;
   currentlyPlayingSongTitle.value = title;
   currentlyPlayingSongArtist.value = artistName;

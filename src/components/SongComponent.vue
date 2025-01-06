@@ -19,8 +19,9 @@
     </div>
     <div class="flex items-center gap-4 mb-8">
       <label for="artist" class="font-semibold w-24">Artist</label>
-      <Dropdown v-model="song.artist" editable :options="artists.value" optionLabel="name"
-                placeholder="Select an artist" class="w-full md:w-14rem"/>
+      <AutoComplete v-model="song.artist" forceSelection optionLabel="name" dropdown
+                    :suggestions="filteredArtists"
+                    @complete="searchArtists" class="w-full md:w-14rem"/>
     </div>
     <div class="flex items-center gap-4 mb-8">
       <label for="genre" class="font-semibold w-24">Genre</label>
@@ -123,6 +124,19 @@ async function playSong() {
 
 function showEditSuccess() {
   toast.add({severity: 'success', summary: 'Song successfully updated', life: 3000});
+}
+
+const filteredArtists = ref();
+
+const searchArtists = (event) => {
+
+  if (!event.query.trim().length) {
+    filteredArtists.value = [...props.artists.value];
+  } else {
+    filteredArtists.value = props.artists.value.filter((artist) => {
+      return artist.name.toLowerCase().startsWith(event.query.toLowerCase());
+    });
+  }
 }
 
 </script>
