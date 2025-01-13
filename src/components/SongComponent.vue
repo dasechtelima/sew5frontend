@@ -65,11 +65,13 @@ const props = defineProps({
     genre: String,
     length: Number,
     title: String,
+    file: String,
   },
   artists: {
     type: Array,
   }
 });
+let oldArtistName = props.song.artist.name;
 
 const formattedLength = computed(() => {
   const minutes = Math.floor(props.song.length / 60);
@@ -93,18 +95,28 @@ function showDeletionSuccess() {
 }
 
 async function editSong() {
+  let artistLink = "";
+  if (props.song.artist._links) {
+    artistLink = props.song.artist._links.self.href;
+  } else {
+    await axios.get(props.song._links.artist.href).then((response) => {
+      artistLink = response.data._links.artist.href;
+    });
+  }
   try {
     await axios.patch(`${props.song._links.self.href}`, {
       title: props.song.title,
-      artist: props.song.artist._links.self.href,
+      artist: artistLink,
       genre: props.song.genre,
       length: props.song.length,
     });
     editSongOverlayIsVisible.value = false;
     showEditSuccess();
     emit('pageUpdate');
+    oldArtistName = props.song.artist.name;
     console.log('Song updated');
-  } catch (error) {
+  } catch
+      (error) {
     console.error('Error updating song:', error);
   }
 }
@@ -129,7 +141,6 @@ function showEditSuccess() {
 const filteredArtists = ref();
 
 const searchArtists = (event) => {
-
   if (!event.query.trim().length) {
     filteredArtists.value = [...props.artists.value];
   } else {

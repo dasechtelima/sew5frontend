@@ -91,7 +91,6 @@ async function fetchSongData(page) {
     const response = await axios.get(`http://localhost:8080/api/songs?page=${page}&projection=songWithArtist`);
     pageData.value = response.data["_embedded"]["songs"];
     totalPageCount.value = response.data["page"]["totalPages"];
-    console.log("Current Page: ", currentPage.value);
   } catch (error) {
     console.error('Error fetching data:', error);
   }
