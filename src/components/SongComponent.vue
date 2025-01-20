@@ -66,12 +66,12 @@ const props = defineProps({
     length: Number,
     title: String,
     file: String,
+    version: Number
   },
   artists: {
     type: Array,
   }
 });
-let oldArtistName = props.song.artist.name;
 
 const formattedLength = computed(() => {
   const minutes = Math.floor(props.song.length / 60);
@@ -105,49 +105,54 @@ async function editSong() {
   }
   try {
     await axios.patch(`${props.song._links.self.href}`, {
-      title: props.song.title,
-      artist: artistLink,
-      genre: props.song.genre,
-      length: props.song.length,
-    });
+          title: props.song.title,
+          artist: artistLink,
+          genre: props.song.genre,
+          length: props.song.length
+        }, {
+          headers: {
+            'If-Match': props.song.version
+          }
+        }
+    );
     editSongOverlayIsVisible.value = false;
     showEditSuccess();
     emit('pageUpdate');
-    oldArtistName = props.song.artist.name;
-    console.log('Song updated');
+    console.log('Song updated: ', props.song);
   } catch
       (error) {
     console.error('Error updating song:', error);
+    toast.add({severity: 'error', summary: 'Error updating song: Version outdated. Please refresh page!', life: 3000});
   }
 }
 
-async function playSong() {
-  try {
-    const response = await axios.get(`${props.song._links.self.href}?projection=songFile`);
-    emit('playSong', {
-      file: response.data.file,
-      title: props.song.title,
-      artistName: props.song.artist.name
-    });
-  } catch (error) {
-    console.error('Error fetching data:', error);
+  async function playSong() {
+    try {
+      const response = await axios.get(`${props.song._links.self.href}?projection=songFile`);
+      emit('playSong', {
+        file: response.data.file,
+        title: props.song.title,
+        artistName: props.song.artist.name
+      });
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
   }
-}
 
-function showEditSuccess() {
-  toast.add({severity: 'success', summary: 'Song successfully updated', life: 3000});
-}
-
-const filteredArtists = ref();
-
-const searchArtists = (event) => {
-  if (!event.query.trim().length) {
-    filteredArtists.value = [...props.artists.value];
-  } else {
-    filteredArtists.value = props.artists.value.filter((artist) => {
-      return artist.name.toLowerCase().startsWith(event.query.toLowerCase());
-    });
+  function showEditSuccess() {
+    toast.add({severity: 'success', summary: 'Song successfully updated', life: 3000});
   }
-}
+
+  const filteredArtists = ref();
+
+  const searchArtists = (event) => {
+    if (!event.query.trim().length) {
+      filteredArtists.value = [...props.artists.value];
+    } else {
+      filteredArtists.value = props.artists.value.filter((artist) => {
+        return artist.name.toLowerCase().startsWith(event.query.toLowerCase());
+      });
+    }
+  }
 
 </script>
