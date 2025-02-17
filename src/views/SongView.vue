@@ -199,7 +199,7 @@ async function searchSongsByTitle() {
     await fetchSongData(currentPage.value);
   } else {
     try {
-      const searchResponse = await axios.get(`http://localhost:8080/api/songs/search/findByTitleIgnoreCaseContainingOrArtistIgnoreCaseContaining?title=${searchTerm.value}&artist=${searchTerm.value}`);
+      const searchResponse = await axios.get(`http://localhost:8080/api/songs/search/findByTitleIgnoreCaseContainingOrArtistIgnoreCaseContainingOrGenreIgnoreCaseContaining?title=${searchTerm.value}&artist=${searchTerm.value}&genre=${searchTerm.value}`);
       if (searchResponse.data["_embedded"]["songs"].length === 0) {
         toast.add({severity: 'info', summary: 'No songs can be found. Please adjust your search.', life: 3000});
       } else {
