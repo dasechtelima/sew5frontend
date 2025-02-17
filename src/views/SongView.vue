@@ -33,6 +33,7 @@
     <div class="flex items-center gap-4 mb-4">
       <label for="title" class="font-semibold w-24">Title</label>
       <InputText id="title" class="flex-auto" autocomplete="off" v-model="newSong.title"/>
+      <div v-if="v$.newSong.title.$error" class="text-red-500">Name must be at least 2 errors long.</div>
     </div>
     <div class="flex items-center gap-4 mb-8">
       <label for="artist" class="font-semibold w-24">Artist</label>
@@ -64,6 +65,8 @@ import {ref, reactive, onMounted} from 'vue';
 import SongComponent from '@/components/SongComponent.vue';
 import axios from 'axios';
 import {useToast} from "primevue/usetoast";
+import {useVuelidate} from '@vuelidate/core'
+import {minLength, required} from '@vuelidate/validators'
 
 const toast = useToast();
 const pageData = reactive([]);
@@ -85,6 +88,17 @@ const currentlyPlayingSong = ref('');
 const currentlyPlayingSongTitle = ref('');
 const currentlyPlayingSongArtist = ref('');
 const audioPlayer = ref(null);
+
+
+//vuelidate
+const rules = {
+  newSong: {
+    title: {minLength: minLength(2)},
+    artist: {required}
+  }
+};
+
+const v$ = useVuelidate(rules, {newSong});
 
 async function fetchSongData(page) {
   try {
@@ -138,6 +152,10 @@ function encodeAudioFile(file) {
 }
 
 async function addSong() {
+  v$.value.$touch();
+  if (v$.value.$invalid) {
+    return;
+  }
   try {
     if (uploadFile.value) {
       newSong.file = await encodeAudioFile(uploadFile.value);
