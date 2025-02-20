@@ -19,6 +19,8 @@ import InputNumber from "primevue/inputnumber";
 import Dropdown from 'primevue/dropdown';
 import AutoComplete from 'primevue/autocomplete';
 import FileUpload from 'primevue/fileupload';
+import MultiSelect from 'primevue/multiselect';
+
 
 
 import {createMemoryHistory, createRouter} from 'vue-router'
@@ -49,6 +51,7 @@ app.component('InputNumber', InputNumber);
 app.component('Dropdown', Dropdown);
 app.component('AutoComplete', AutoComplete);
 app.component('FileUpload', FileUpload);
+app.component('MultiSelect', MultiSelect);
 app.use(ToastService);
 app.use(PrimeVue);
 app.use(router);

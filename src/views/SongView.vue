@@ -43,7 +43,9 @@
     </div>
     <div class="flex items-center gap-4 mb-8">
       <label for="genre" class="font-semibold w-24">Genre</label>
-      <InputText id="genre" class="flex-auto" autocomplete="off" v-model="newSong.genre"/>
+      <MultiSelect v-model="newSong.genre" display="chip" :options="genres" optionLabel="name"
+                   placeholder="Select Genres"
+      />
     </div>
     <div class="flex items-center gap-4 mb-8">
       <label for="genre" class="font-semibold w-24">File</label>
@@ -98,6 +100,25 @@ const rules = {
   }
 };
 
+//genres
+const genres = [
+  {
+    name: "Indie"
+  },
+  {
+    name: "Pop"
+  },
+  {
+    name: "Rock"
+  },
+  {
+    name: "Jazz"
+  },
+  {
+    name: "Hip-Hop"
+  }
+];
+
 const v$ = useVuelidate(rules, {newSong});
 
 async function fetchSongData(page) {
@@ -105,6 +126,7 @@ async function fetchSongData(page) {
     const response = await axios.get(`http://localhost:8080/api/songs?page=${page}&projection=songWithArtist`);
     pageData.value = response.data["_embedded"]["songs"];
     totalPageCount.value = response.data["page"]["totalPages"];
+    console.log('Fetched data:', pageData.value);
   } catch (error) {
     console.error('Error fetching data:', error);
   }
@@ -161,12 +183,11 @@ async function addSong() {
       newSong.file = await encodeAudioFile(uploadFile.value);
     }
     newSong.artist = newSong.artist._links.artist.href;
-    console.log('Adding song:', newSong);
     await axios.post('http://localhost:8080/api/songs', newSong);
     addSongOverlayIsVisible.value = false;
     newSong.title = '';
     newSong.artist = '';
-    newSong.genre = '';
+    newSong.genre = {};
     newSong.length = 0;
     newSong.file = '';
     await pageUpdate(currentPage.value);
@@ -199,11 +220,12 @@ async function searchSongsByTitle() {
     await fetchSongData(currentPage.value);
   } else {
     try {
-      const searchResponse = await axios.get(`http://localhost:8080/api/songs/search/findByTitleIgnoreCaseContainingOrArtistIgnoreCaseContainingOrGenreIgnoreCaseContaining?title=${searchTerm.value}&artist=${searchTerm.value}&genre=${searchTerm.value}`);
+      const searchResponse = await axios.get(`http://localhost:8080/api/songs/search/searchSongs?title=${searchTerm.value}&artist_name=${searchTerm.value}&genre_name=${searchTerm.value}`);
       if (searchResponse.data["_embedded"]["songs"].length === 0) {
         toast.add({severity: 'info', summary: 'No songs can be found. Please adjust your search.', life: 3000});
       } else {
         pageData.value = searchResponse.data["_embedded"]["songs"];
+        console.log("search data: ", pageData.value);
       }
     } catch (error) {
       console.error('Error searching songs:', error);

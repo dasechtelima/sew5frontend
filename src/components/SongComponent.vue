@@ -2,7 +2,7 @@
   <Toast/>
   <Card style="margin: 10px; width: 20rem; overflow: hidden">
     <template #title>{{ song.title }} - {{ song.artist.name }}</template>
-    <template #subtitle>{{ song.genre }}</template>
+    <template #subtitle>{{ song.genre.map(g => g.name).join(', ') }}</template>
     <template #content>{{ formattedLength }} min</template>
     <template #footer>
       <div style="display:flex; gap: 2rem; justify-content: center">
@@ -25,11 +25,13 @@
     </div>
     <div class="flex items-center gap-4 mb-8">
       <label for="genre" class="font-semibold w-24">Genre</label>
-      <InputText id="genre" class="flex-auto" autocomplete="off" v-model="song.genre"/>
+      <MultiSelect v-model="song.genre" display="chip" :options="genres" optionLabel="name"
+                   placeholder="Select Genres"
+      />
     </div>
     <div class="flex items-center gap-4 mb-8">
-      <label for="genre" class="font-semibold w-24">Length in s</label>
-      <InputNumber id="genre" class="flex-auto" autocomplete="off" v-model="song.length"/>
+      <label for="length" class="font-semibold w-24">Length in s</label>
+      <InputNumber id="length" class="flex-auto" autocomplete="off" v-model="song.length"/>
     </div>
     <div class="flex justify-end gap-2">
       <Button type="button" label="Cancel" severity="secondary" @click="editSongOverlayIsVisible = false"/>
@@ -62,7 +64,7 @@ const props = defineProps({
       }
     },
     artist: {},
-    genre: String,
+    genre: {},
     length: Number,
     title: String,
     file: String,
@@ -72,6 +74,25 @@ const props = defineProps({
     type: Array,
   }
 });
+
+//genres
+const genres = [
+  {
+    name: "Indie"
+  },
+  {
+    name: "Pop"
+  },
+  {
+    name: "Rock"
+  },
+  {
+    name: "Jazz"
+  },
+  {
+    name: "Hip-Hop"
+  }
+];
 
 const formattedLength = computed(() => {
   const minutes = Math.floor(props.song.length / 60);
@@ -126,33 +147,33 @@ async function editSong() {
   }
 }
 
-  async function playSong() {
-    try {
-      const response = await axios.get(`${props.song._links.self.href}?projection=songFile`);
-      emit('playSong', {
-        file: response.data.file,
-        title: props.song.title,
-        artistName: props.song.artist.name
-      });
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
+async function playSong() {
+  try {
+    const response = await axios.get(`${props.song._links.self.href}?projection=songFile`);
+    emit('playSong', {
+      file: response.data.file,
+      title: props.song.title,
+      artistName: props.song.artist.name
+    });
+  } catch (error) {
+    console.error('Error fetching data:', error);
   }
+}
 
-  function showEditSuccess() {
-    toast.add({severity: 'success', summary: 'Song successfully updated', life: 3000});
+function showEditSuccess() {
+  toast.add({severity: 'success', summary: 'Song successfully updated', life: 3000});
+}
+
+const filteredArtists = ref();
+
+const searchArtists = (event) => {
+  if (!event.query.trim().length) {
+    filteredArtists.value = [...props.artists.value];
+  } else {
+    filteredArtists.value = props.artists.value.filter((artist) => {
+      return artist.name.toLowerCase().startsWith(event.query.toLowerCase());
+    });
   }
-
-  const filteredArtists = ref();
-
-  const searchArtists = (event) => {
-    if (!event.query.trim().length) {
-      filteredArtists.value = [...props.artists.value];
-    } else {
-      filteredArtists.value = props.artists.value.filter((artist) => {
-        return artist.name.toLowerCase().startsWith(event.query.toLowerCase());
-      });
-    }
-  }
+}
 
 </script>
