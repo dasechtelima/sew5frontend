@@ -6,7 +6,7 @@
     <template #content>{{ formattedLength }} min</template>
     <template #footer>
       <div style="display:flex; gap: 2rem; justify-content: center">
-        <Button label="Edit" severity="secondary" outlined class="w-full" v-on:click="editSongOverlayIsVisible = true"/>
+        <Button label="Edit" severity="secondary" outlined class="w-full" v-on:click="checkCredentialsForEditing()"/>
         <Button label="Delete" severity="danger" class="w-full" v-on:click="deleteSong()"/>
         <Button icon="pi pi-play" class="w-full" v-on:click="playSong()"/>
       </div>
@@ -72,6 +72,9 @@ const props = defineProps({
   },
   artists: {
     type: Array,
+  },
+  loggedIn: {
+    type: Boolean,
   }
 });
 
@@ -101,8 +104,12 @@ const formattedLength = computed(() => {
 });
 
 async function deleteSong() {
+  if (!props.loggedIn) {
+    toast.add({severity: 'error', summary: 'Please log in to delete a song', life: 3000});
+    return;
+  }
   try {
-    await axios.delete(`${props.song._links.self.href}`);
+    await axios.delete(`${props.song._links.self.href}`, {withCredentials: true});
     showDeletionSuccess();
     emit('pageUpdate');
     console.log('Song deleted');
@@ -120,7 +127,7 @@ async function editSong() {
   if (props.song.artist._links) {
     artistLink = props.song.artist._links.self.href;
   } else {
-    await axios.get(props.song._links.artist.href).then((response) => {
+    await axios.get(props.song._links.artist.href, {withCredentials: true}).then((response) => {
       artistLink = response.data._links.artist.href;
     });
   }
@@ -133,7 +140,8 @@ async function editSong() {
         }, {
           headers: {
             'If-Match': props.song.version
-          }
+          },
+          withCredentials: true
         }
     );
     editSongOverlayIsVisible.value = false;
@@ -176,4 +184,11 @@ const searchArtists = (event) => {
   }
 }
 
+function checkCredentialsForEditing() {
+  if (!props.loggedIn) {
+    toast.add({severity: 'error', summary: 'Please log in to edit a song', life: 3000});
+  } else {
+    editSongOverlayIsVisible.value = true;
+  }
+}
 </script>

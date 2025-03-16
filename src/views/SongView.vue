@@ -1,7 +1,8 @@
 <template>
   <Toolbar>
     <template #start>
-      <Button label="Add Song" icon="pi pi-plus" @click="addSongOverlayIsVisible = true"/>
+      <Button label="Add Song" icon="pi pi-plus" @click="checkCredentialsForAdding()"/>
+      <Button label="Login" @click="loginOverlayIsVisible = true"/>
     </template>
     <template #center>
       <Button label="First" icon="pi pi-step-backward" @click="pageUpdate('first')" style="margin-right: 10px"
@@ -27,6 +28,7 @@
   <Toast/>
   <div style="display: flex; flex-direction:row; flex-wrap:wrap">
     <SongComponent v-for="song in pageData.value" :key="song._links.self.href" :song="song" :artists="artists"
+                   :loggedIn="loggedIn"
                    @pageUpdate="pageUpdate(currentPage)" @playSong="handlePlaySong"/>
   </div>
   <Dialog v-model:visible="addSongOverlayIsVisible" modal header="Add a Song" :style="{ width: '25rem' }">
@@ -60,6 +62,19 @@
       <Button type="button" label="Save" severity="success" @click="addSong()"></Button>
     </div>
   </Dialog>
+  <Dialog v-model:visible="loginOverlayIsVisible" modal header="Login" :style="{ width: '25rem' }">
+    <form @submit.prevent="handleLogin">
+      <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username" v-model="username" required/>
+      </div>
+      <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" v-model="password" required/>
+      </div>
+      <button type="submit">Login</button>
+    </form>
+  </Dialog>
 </template>
 
 <script setup>
@@ -73,7 +88,7 @@ import {minLength, required} from '@vuelidate/validators'
 const toast = useToast();
 const pageData = reactive([]);
 const currentPage = ref(0);
-const totalPageCount = reactive([""]);
+const totalPageCount = ref("");
 const addSongOverlayIsVisible = ref(false);
 const newSong = reactive({
   title: '',
@@ -121,12 +136,23 @@ const genres = [
 
 const v$ = useVuelidate(rules, {newSong});
 
+const loggedIn = ref(false);
+const loginOverlayIsVisible = ref(false);
+
+function checkCredentialsForAdding() {
+  if (!loggedIn.value) {
+    toast.add({severity: 'error', summary: 'Please log in to add a song', life: 3000});
+  } else {
+    addSongOverlayIsVisible.value = true;
+  }
+}
+
 async function fetchSongData(page) {
   try {
-    const response = await axios.get(`http://localhost:8080/api/songs?page=${page}&projection=songWithArtist`);
+    const response = await axios.get(`http://localhost:8080/api/songs/search/searchSongs?title=&artist_name=&genre_name=&page=${page}&size=7&projection=songWithArtist`);
     pageData.value = response.data["_embedded"]["songs"];
     totalPageCount.value = response.data["page"]["totalPages"];
-    console.log('Fetched data:', pageData.value);
+    console.log('Fetched data:', response.data);
   } catch (error) {
     console.error('Error fetching data:', error);
   }
@@ -174,6 +200,11 @@ function encodeAudioFile(file) {
 }
 
 async function addSong() {
+  //display toast and return if not loggedIn
+  if (!loggedIn.value) {
+    toast.add({severity: 'error', summary: 'Please log in to add a song', life: 3000});
+    return;
+  }
   v$.value.$touch();
   if (v$.value.$invalid) {
     return;
@@ -183,7 +214,7 @@ async function addSong() {
       newSong.file = await encodeAudioFile(uploadFile.value);
     }
     newSong.artist = newSong.artist._links.artist.href;
-    await axios.post('http://localhost:8080/api/songs', newSong);
+    await axios.post('http://localhost:8080/api/songs/', newSong, {withCredentials: true});
     addSongOverlayIsVisible.value = false;
     newSong.title = '';
     newSong.artist = '';
@@ -236,6 +267,33 @@ async function searchSongsByTitle() {
 function debounceSearch() {
   clearTimeout(debounceTimeout);
   debounceTimeout = setTimeout(searchSongsByTitle, 2000); // 2 seconds debounce
+}
+
+const username = ref('hugo');
+const password = ref('password');
+
+async function handleLogin() {
+  try {
+    console.log("in login")
+    const response = await axios.post(`http://localhost:8080/login`, {
+          username: username.value,
+          password: password.value
+        },
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          withCredentials: true
+        });
+    console.log('Login response:', response.data);
+    if (response.status === 200) {
+      loggedIn.value = true;
+      toast.add({severity: 'success', summary: 'Successfully logged in', life: 3000});
+      loginOverlayIsVisible.value = false;
+    }
+  } catch (error) {
+    console.error('Error in login:', error);
+  }
 }
 
 onMounted(async () => {

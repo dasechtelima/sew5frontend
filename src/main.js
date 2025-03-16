@@ -30,7 +30,7 @@ import ArtistView from "@/views/ArtistView.vue";
 
 const routes = [
     {path: '/songs', component: SongView},
-    {path: '/artists', component: ArtistView},
+    {path: '/artists', component: ArtistView}
 ]
 
 const router = createRouter({
