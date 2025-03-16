@@ -269,8 +269,8 @@ function debounceSearch() {
   debounceTimeout = setTimeout(searchSongsByTitle, 2000); // 2 seconds debounce
 }
 
-const username = ref('hugo');
-const password = ref('password');
+const username = ref('');
+const password = ref('');
 
 async function handleLogin() {
   try {
